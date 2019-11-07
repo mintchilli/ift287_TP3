@@ -6,6 +6,14 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Query;
+
+import JardinCollectif.Data.Membre;
+import JardinCollectif.Data.Plante;
+import JardinCollectif.Data.PlanteLot;
+
 import java.sql.Date;
 
 public class PlanteAccess {
@@ -18,16 +26,12 @@ public class PlanteAccess {
 	
 	public boolean ajouterPlante(String nomPlante, int tempsDeCulture) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("insert into Plante(nomPlante, tempsCulture) values(?,?)");
-			s.setString(1, nomPlante);
-			s.setInt(2, tempsDeCulture);
-
-			s.execute();
-
+			conn.getConnection().getTransaction().begin();
+			Plante p = new Plante(nomPlante, tempsDeCulture);
+			conn.getConnection().persist(p);
 			return true;
-
-		} catch (SQLException e) {
+			
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -35,23 +39,21 @@ public class PlanteAccess {
 	
 	public boolean retirerPlante(String nomPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("select count(*) from plantelot where idplante = ?");
-			s.setInt(1, getPlanteId(nomPlante));
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query1 = conn.getConnection().createQuery("SELECT count(*) FROM plante WHERE nomPlante = :nomPlante");
+
+			int count = (int) query1.setParameter("nomPlante", nomPlante).getSingleResult();
 			
-			ResultSet rs = s.getResultSet();
-			if (rs.next() && rs.getInt("count") > 0)
+			if (count > 0)
 				return false;
 			
-			PreparedStatement s2 = conn.getConnection()
-					.prepareStatement("delete from Plante where nomPlante = ?");
-			s2.setString(1, nomPlante);
-			s2.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query2 = conn.getConnection().createQuery("DELETE FROM Plante p WHERE p.nomPlante = :nomPlante");
+			query2.setParameter("nomPlante", nomPlante).executeUpdate();
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -59,19 +61,13 @@ public class PlanteAccess {
 	
 	public boolean planterPlante(int idLot, int idPlante, Date datePlantation, int nbExemplaires, Date dateDeRecoltePrevu) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("insert into PlanteLot(idLot, idPlante, datePlantation, nbExemplaires, dateDeRecoltePrevu) values(?,?,?,?,?)");
-			s.setInt(1, idLot);
-			s.setInt(2, idPlante);
-			s.setDate(3, datePlantation);
-			s.setInt(4, nbExemplaires);
-			s.setDate(5, dateDeRecoltePrevu);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			PlanteLot pl = new PlanteLot(idLot, idPlante, datePlantation, dateDeRecoltePrevu, nbExemplaires);
+			conn.getConnection().persist(pl);
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -79,26 +75,23 @@ public class PlanteAccess {
 	
 	public boolean recolterPlante(int idPlante, int idLot) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("select * from PlanteLot where idLot = ? and idPlante = ?");
-			s.setInt(1, idLot);
-			s.setInt(2, idPlante);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("select * from PlanteLot where idLot = :idLot and idPlante = :idPlante");
+			PlanteLot pl = (PlanteLot) query
+				.setParameter("idLot", idLot)
+				.setParameter("idPlante", idPlante)
+				.getSingleResult();
 			
-			ResultSet rs = s.getResultSet();
-			if (!rs.next())
-				return false;
-			
-			PreparedStatement s2 = conn.getConnection()
-					.prepareStatement("delete from plantelot where idLot = ? and idPlante = ?");
-			s2.setInt(1, idLot);
-			s2.setInt(2, idPlante);
-			s2.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query2 = conn.getConnection().createQuery("delete from plantelot where idLot = :idLot and idPlante = :idPlante");
+			query2
+				.setParameter("idLot", idLot)
+				.setParameter("idPlante", idPlante)
+				.executeUpdate();
 			
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -106,15 +99,13 @@ public class PlanteAccess {
 	
 	public int getPlanteId(String nomPlante) {
 		try {
-			PreparedStatement s = conn.getConnection().prepareStatement("SELECT idPlante FROM plante WHERE nomplante = ?");
-
-			s.setString(1, nomPlante);
-
-			s.execute();
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getInt("idplante");
-		} catch (SQLException e) {
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT idPlante FROM plante WHERE nomPlante = :nomPlante");
+			return (int) query
+				.setParameter("nomPlante", nomPlante)
+				.getSingleResult();
+			
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -123,14 +114,13 @@ public class PlanteAccess {
 	
 	public String getPlanteNom(int idPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT nomPlante FROM plante WHERE idPlante = ?");
-			s.setInt(1, idPlante);
-			s.execute();
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getString("nomPlante");
-		} catch (SQLException e) {
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT nomPlante FROM plante WHERE idPlante = :idPlante");
+			return (String) query
+				.setParameter("idPlante", idPlante)
+				.getSingleResult();
+			
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -139,14 +129,13 @@ public class PlanteAccess {
 	
 	public int getPlanteNbrTotal(int idPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT SUM(nbExemplaires) FROM plantelot WHERE idPlante = ?");
-			s.setInt(1, idPlante);
-			s.execute();
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getInt("sum");
-		} catch (SQLException e) {
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT SUM(nbExemplaires) FROM plantelot WHERE idPlante = :idPlante");
+			return (int) query
+				.setParameter("idPlante", idPlante)
+				.getSingleResult();
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -155,16 +144,13 @@ public class PlanteAccess {
 	
 	public int getTempsCulture(String nomPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT tempsCulture FROM plante WHERE nomplante = ?");
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT tempsCulture FROM plante WHERE nomPlante = :nomPlante");
+			return (int) query
+				.setParameter("nomPlante", nomPlante)
+				.getSingleResult();
 
-			s.setString(1, nomPlante);
-			s.execute();
-			
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getInt("tempsCulture");
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -173,17 +159,14 @@ public class PlanteAccess {
 	
 	public Date getDatePlantation(int idLot, int idPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT datePlantation FROM plantelot WHERE idLot = ? and idPlante = ?");
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT datePlantation FROM plantelot WHERE idLot = :idLot and idPlante = :idPlante");
+			return (Date) query
+				.setParameter("idLot", idLot)
+				.setParameter("idPlante", idPlante)
+				.getSingleResult();
 
-			s.setInt(1, idLot);
-			s.setInt(2, idPlante);
-			s.execute();
-			
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getDate("datePlantation");
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -192,17 +175,14 @@ public class PlanteAccess {
 	
 	public Date getDateDeRecoltePrevu(int idLot, int idPlante) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT dateDeRecoltePrevu FROM plantelot WHERE idLot = ? and idPlante = ?");
-
-			s.setInt(1, idLot);
-			s.setInt(2, idPlante);
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT dateDeRecoltePrevu FROM plantelot WHERE idLot = :idLot and idPlante = :idPlante");
+			return (Date) query
+				.setParameter("idLot", idLot)
+				.setParameter("idPlante", idPlante)
+				.getSingleResult();
 			
-			ResultSet rs = s.getResultSet();
-			if(rs.next())
-				return rs.getDate("dateDeRecoltePrevu");
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -211,15 +191,14 @@ public class PlanteAccess {
 	
 	public ArrayList<String> getPlantesList() {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT DISTINCT idplante FROM plantelot");
-			s.execute();
-			ResultSet rs = s.getResultSet();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT * FROM plante");
+			List<Plante> pList = (List<Plante>) query.getResultList();
+			
 			ArrayList<String> ret = new ArrayList<String>();
 			
-			while (rs.next()) {
-				
-				int idPlante = rs.getInt("idplante");
+			for (Plante plante : pList) {
+				int idPlante = plante.getNoPlante();
 				
 				String data = "Plante : ";
 				data += getPlanteNom(idPlante);
@@ -231,7 +210,7 @@ public class PlanteAccess {
 
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -239,31 +218,31 @@ public class PlanteAccess {
 	
 	public ArrayList<String> getPlantesPourLot(int idLot) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT idplante, datePlantation, dateDeRecoltePrevu FROM plantelot WHERE idLot = ?");
-			s.setInt(1, idLot);
-			s.execute();
-			ResultSet rs = s.getResultSet();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT * FROM plantelot WHERE idLot = :idLot");
+			List<PlanteLot> plList = (List<PlanteLot>) query
+					.setParameter("idLot", idLot)
+					.getResultList();
 			
 			ArrayList<String> ret = new ArrayList<String>();
 			
-			while (rs.next()) {
-				int idPlante = rs.getInt("idplante");
+			for (PlanteLot pl : plList) {
+				int idPlante = pl.getIdPlante();
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 				
 				String data = "Plante : ";
 				data += getPlanteNom(idPlante);
 				data += ", Date de plantation : ";
-				data += df.format(rs.getDate("datePlantation"));
+				data += df.format(pl.getDatePlantation());
 				data += ", Date de recolte prevu : ";
-				data += df.format(rs.getDate("dateDeRecoltePrevu"));
+				data += df.format(pl.getDateDeRecoltePrevu());
 				
 				ret.add(data);
 			}
 
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;

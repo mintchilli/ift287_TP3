@@ -142,6 +142,8 @@ public class ConnectionManager {
 						pa = new PlanteAccess(cx);
 
 					pa.ajouterPlante(nomPlante, tempsDeCulture);
+					isCommiteableTransaction = true;
+					
 				} else if (command.equals("retirerPlante")) {
 					String nomPlante = readString(tokenizer);
 
@@ -149,6 +151,8 @@ public class ConnectionManager {
 						pa = new PlanteAccess(cx);
 
 					pa.retirerPlante(nomPlante);
+					isCommiteableTransaction = true;
+					
 				} else if (command.equals("planterPlante")) {
 					String nomPlante = readString(tokenizer);
 					String nomLot = readString(tokenizer);
@@ -176,7 +180,10 @@ public class ConnectionManager {
 
 					if (nbExemplaires > 0 && idLot != -1 && idPlante != -1
 							&& la.getMembrePourLot(idLot).contains(noMembre))
+					{
 						pa.planterPlante(idLot, idPlante, datePlantation, nbExemplaires, dateDeRecoltePrevu);
+						isCommiteableTransaction = true;
+					}
 				} else if (command.equals("recolterPlante")) {
 					String nomPlante = readString(tokenizer);
 					String nomLot = readString(tokenizer);
@@ -199,7 +206,10 @@ public class ConnectionManager {
 
 					if (pretPourRecolte && idPlante != -1 && idLot != -1
 							&& la.getMembrePourLot(la.getLotid(nomLot)).contains(noMembre))
+					{
 						pa.recolterPlante(idPlante, idLot);
+						isCommiteableTransaction = true;
+					}
 				} else if (command.equals("afficherMembres")) {
 					MembreManager mm = new MembreManager(cx);
 					jc.afficherListeMembre(mm.getMembre());

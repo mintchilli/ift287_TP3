@@ -55,6 +55,7 @@ public class ConnectionManager {
 						ma = new MembreAccess(cx);
 
 					ma.inscrireMembre(prenom, nom, motDePasse, noMembre);
+					isCommiteableTransaction = true;
 
 				} else if (command.equals("supprimerMembre")) {
 					int noMembre = readInt(tokenizer);
@@ -66,8 +67,11 @@ public class ConnectionManager {
 
 					//if (!mm.isOnlyLotMember(noMembre))
 					//a enlever rendu la  ------------------------------------------ 
-					if(true)
+					if(true) {
 						ma.supprimerMembre(noMembre);
+						isCommiteableTransaction = true;
+					}
+						
 
 					else {
 						jc.AfficherErreur("erreur, le membre est seul sur un lot");
@@ -80,6 +84,7 @@ public class ConnectionManager {
 						ma = new MembreAccess(cx);
 
 					ma.makeAdmin(noMembre);
+					isCommiteableTransaction = true;
 				} else if (command.equals("ajouterLot")) {
 					String nomLot = readString(tokenizer);
 					int noMaxMembre = readInt(tokenizer);

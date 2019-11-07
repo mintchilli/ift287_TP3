@@ -35,6 +35,7 @@ public class MembreAccess {
 
 	public boolean supprimerMembre(int noMembre) {
 		try {
+			conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery("DELETE FROM Membre m WHERE m.noMembre = :noMembre");
 			query.setParameter("noMembre", noMembre).executeUpdate();
 
@@ -49,13 +50,13 @@ public class MembreAccess {
 
 	public boolean makeAdmin(int noMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("UPDATE membre SET isadmin = 'true' WHERE nomembre = ?");
-			s.setInt(1, noMembre);
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("UPDATE Membre SET estAdmin = 1 WHERE noMembre = :noMembre");
+			query.setParameter("noMembre", noMembre).executeUpdate();
+
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -86,10 +87,10 @@ public class MembreAccess {
 
 	}
 
-	//------------------------------herre*---------------------
+	// ------------------------------herre*---------------------
 	public int getMembreCount(int idLot) {
 		try {
-			
+
 			Query query = conn.getConnection().createQuery("SELECT count(*) FROM membrelot WHERE idlot = :idLot");
 			query.setParameter("idLot", idLot).executeUpdate();
 

@@ -4,12 +4,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import JardinCollectif.Data.Membre;
+import JardinCollectif.Data.MembreLot;
 
 public class MembreAccess {
 
@@ -66,34 +68,28 @@ public class MembreAccess {
 	public ArrayList<Integer> getMembreLots(int noMembre) {
 		ArrayList<Integer> ret = new ArrayList<Integer>();
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT idlot FROM membrelot WHERE nomembre = ?");
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT idlot FROM membrelot WHERE nomembre = :noMembre");
+			List<MembreLot> membrelots = query.setParameter("noMembre", noMembre).getResultList();
 
-			s.setInt(1, noMembre);
-
-			s.execute();
-			ResultSet rs = s.getResultSet();
-
-			while (rs.next()) {
-				ret.add(rs.getInt("idlot"));
+			for (MembreLot m : membrelots) {
+				ret.add(m.getIdLot());
 			}
 
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
+			conn.rollback();
 			e.printStackTrace();
 			return ret;
 		}
 
 	}
 
-	// ------------------------------herre*---------------------
 	public int getMembreCount(int idLot) {
 		try {
 
 			Query query = conn.getConnection().createQuery("SELECT count(*) FROM membrelot WHERE idlot = :idLot");
-			query.setParameter("idLot", idLot).executeUpdate();
-
 			return (int) query.setParameter("idLot", idLot).getSingleResult();
 
 		} catch (Exception e) {
@@ -104,20 +100,19 @@ public class MembreAccess {
 
 	public ArrayList<String> getMembreList() {
 		try {
-			PreparedStatement s = conn.getConnection().prepareStatement("SELECT nom, prenom, estadmin FROM membre;");
 
-			s.execute();
-			ResultSet rs = s.getResultSet();
+			Query query = conn.getConnection().createQuery("SELECT nom, prenom, estadmin FROM membre;");
+			List<Membre> membres = query.getResultList();
 
 			ArrayList<String> ret = new ArrayList<String>();
 
-			while (rs.next()) {
-				String data = "Prénom : ";
-				data += rs.getString("prenom");
+			for (Membre membre : membres) {
+				String data = "Prï¿½nom : ";
+				data += membre.getPrenom();
 				data += ", Nom : ";
-				data += rs.getString("nom");
+				data += membre.getNom();
 				data += ", Est un administrateur: ";
-				if (rs.getBoolean("estadmin"))
+				if (membre.getIsAdmin())
 					data += "oui";
 				else
 					data += "non";
@@ -126,7 +121,7 @@ public class MembreAccess {
 
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -134,31 +129,26 @@ public class MembreAccess {
 
 	public String getMembre(int noMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT nom, prenom, estadmin FROM membre WHERE nomembre = ?");
 
-			s.setInt(1, noMembre);
-			s.execute();
-
-			ResultSet rs = s.getResultSet();
+			Query query = conn.getConnection()
+					.createQuery("SELECT nom, prenom, estadmin FROM membre WHERE nomembre = :noMembre");
+			Membre membre = (Membre) query.setParameter("noMembre", noMembre).getSingleResult();
 
 			String data = "";
 
-			while (rs.next()) {
-				data = "Prénom : ";
-				data += rs.getString("prenom");
-				data += ", Nom : ";
-				data += rs.getString("nom");
-				data += ", Est un administrateur: ";
-				if (rs.getBoolean("estadmin"))
-					data += "oui";
-				else
-					data += "non";
-			}
+			data = "Prï¿½nom : ";
+			data += membre.getPrenom();
+			data += ", Nom : ";
+			data += membre.getNom();
+			data += ", Est un administrateur: ";
+			if (membre.getIsAdmin())
+				data += "oui";
+			else
+				data += "non";
 
 			return data;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}

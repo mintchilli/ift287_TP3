@@ -65,13 +65,10 @@ public class ConnectionManager {
 					if (ma == null)
 						ma = new MembreAccess(cx);
 
-					//if (!mm.isOnlyLotMember(noMembre))
-					//a enlever rendu la  ------------------------------------------ 
-					if(true) {
+					if (!mm.isOnlyLotMember(noMembre)) {
 						ma.supprimerMembre(noMembre);
 						isCommiteableTransaction = true;
 					}
-						
 
 					else {
 						jc.AfficherErreur("erreur, le membre est seul sur un lot");
@@ -93,6 +90,7 @@ public class ConnectionManager {
 						la = new LotAccess(cx);
 
 					la.ajouterLot(nomLot, noMaxMembre);
+					isCommiteableTransaction = true;
 				} else if (command.equals("supprimerLot")) {
 					String nomLot = readString(tokenizer);
 
@@ -100,9 +98,12 @@ public class ConnectionManager {
 						la = new LotAccess(cx);
 					LotManager lm = new LotManager(cx);
 					if (lm.hasPlants(nomLot))
-						jc.AfficherErreur("erreur, il y a encore desd plantes non récolté dans ce lot");
-					else
+						jc.AfficherErreur("erreur, il y a encore desd plantes non rï¿½coltï¿½ dans ce lot");
+					else {
 						la.supprimerLot(nomLot);
+						isCommiteableTransaction = true;
+					}
+
 				} else if (command.equals("rejoindreLot")) {
 					String nomLot = readString(tokenizer);
 					int noMembre = readInt(tokenizer);
@@ -111,6 +112,7 @@ public class ConnectionManager {
 						la = new LotAccess(cx);
 
 					la.rejoindreLot(la.getLotid(nomLot), noMembre);
+					isCommiteableTransaction = true;
 				} else if (command.equals("accepterDemande")) {
 					String nomLot = readString(tokenizer);
 					int noMembre = readInt(tokenizer);
@@ -122,6 +124,7 @@ public class ConnectionManager {
 
 					if (lm.hasSpace(nomLot)) {
 						la.accepterDemande(la.getLotid(nomLot), noMembre);
+						isCommiteableTransaction = true;
 					} else {
 						jc.AfficherErreur("erreur, plus d'espace dans le lot");
 					}
@@ -134,6 +137,7 @@ public class ConnectionManager {
 						la = new LotAccess(cx);
 
 					la.refuserDemande(la.getLotid(nomLot), noMembre);
+					isCommiteableTransaction = true;
 				} else if (command.equals("ajouterPlante")) {
 					String nomPlante = readString(tokenizer);
 					int tempsDeCulture = readInt(tokenizer);

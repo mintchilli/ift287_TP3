@@ -6,13 +6,13 @@ import javax.persistence.*;
 public class MembreLot {
 
 	private Integer idMembre;
-	private String nomLot;
+	private Integer idLot;
 	private Boolean validationAdmin;
 
-	public MembreLot(Integer noMembre, String nomLot) {
+	public MembreLot(Integer noMembre, Integer idLot) {
 		super();
 		this.idMembre = noMembre;
-		this.nomLot = nomLot;
+		this.idLot = idLot;
 		this.validationAdmin = false;
 	}
 
@@ -24,12 +24,12 @@ public class MembreLot {
 		this.idMembre = idMembre;
 	}
 
-	public String getNomLot() {
-		return nomLot;
+	public Integer getIdLot() {
+		return idLot;
 	}
 
-	public void setNomLot(String nomLot) {
-		this.nomLot = nomLot;
+	public void setNomLot(Integer idLot) {
+		this.idLot = idLot;
 	}
 
 	public Boolean getValidationAdmin() {

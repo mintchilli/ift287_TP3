@@ -4,6 +4,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Query;
+
+import JardinCollectif.Data.Lot;
+import JardinCollectif.Data.Membre;
+import JardinCollectif.Data.MembreLot;
 
 public class LotAccess {
 
@@ -15,17 +22,13 @@ public class LotAccess {
 
 	public boolean ajouterLot(String nomLot, int noMaxMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("insert into lot(nomlot, nomaxmembre) values(?,?)");
-
-			s.setString(1, nomLot);
-			s.setInt(2, noMaxMembre);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Lot l = new Lot(nomLot, noMaxMembre);
+			conn.getConnection().persist(l);
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -34,17 +37,14 @@ public class LotAccess {
 
 	public boolean rejoindreLot(int idLot, int noMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("insert into membreLot(idLot, noMembre) values(?,?)");
 
-			s.setInt(1, idLot);
-			s.setInt(2, noMembre);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			MembreLot ml = new MembreLot(noMembre, idLot);
+			conn.getConnection().persist(ml);
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -53,19 +53,17 @@ public class LotAccess {
 
 	public int getLotid(String nomLot) {
 		try {
-			PreparedStatement s = conn.getConnection().prepareStatement("SELECT idlot FROM lot WHERE nomlot = ?");
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("SELECT idLot FROM Lot WHERE nomLot = :nomLot");
 
-			s.setString(1, nomLot);
+			Lot lot = (Lot) query.setParameter("nomLot", nomLot).getSingleResult();
 
-			s.execute();
-			ResultSet rs = s.getResultSet();
-			if (rs.next()) {
-				return rs.getInt("idlot");
-			}
+			if (lot != null)
+				return lot.getIdLot();
 
 			return -1;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return -1;
 		}
@@ -74,17 +72,15 @@ public class LotAccess {
 
 	public boolean accepterDemande(int idLot, int noMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("UPDATE membrelot SET validationAdmin = 'true' WHERE nomembre = ? AND idLot = ?");
-
-			s.setInt(1, noMembre);
-			s.setInt(2, idLot);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery(
+					"UPDATE membrelot SET validationAdmin = 1 WHERE noMembre = :noMembre AND idLot = :idLot");
+			query.setParameter("noMembre", noMembre);
+			query.setParameter("idLot", idLot).executeUpdate();
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -93,17 +89,16 @@ public class LotAccess {
 
 	public boolean refuserDemande(int idLot, int noMembre) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("DELETE FROM membrelot WHERE nomembre = ? AND idLot = ?");
 
-			s.setInt(1, noMembre);
-			s.setInt(2, idLot);
-
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection()
+					.createQuery("DELETE FROM membrelot WHERE noMembre = :noMembre AND idLot = :idLot");
+			query.setParameter("noMembre", noMembre);
+			query.setParameter("idLot", idLot).executeUpdate();
 
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -112,18 +107,16 @@ public class LotAccess {
 
 	public int getMembreMax(String nomLot) {
 		try {
-			PreparedStatement s = conn.getConnection().prepareStatement("SELECT nomaxmembre FROM lot WHERE nomlot = ?");
 
-			s.setString(1, nomLot);
+			Query query = conn.getConnection().createQuery("SELECT nomaxmembre FROM lot WHERE nomlot = :nomLot");
+			Lot lot = (Lot) query.setParameter("nomLot", nomLot).getSingleResult();
 
-			s.execute();
-			ResultSet rs = s.getResultSet();
-			if (rs.next()) {
-				return rs.getInt("nomaxmembre");
+			if (lot != null) {
+				return lot.getNoMaxMembre();
 			}
 			return -1;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return -1;
 		}
@@ -132,16 +125,16 @@ public class LotAccess {
 	public boolean supprimerLot(String nomLot) {
 		try {
 
-			PreparedStatement s = conn.getConnection().prepareStatement("DELETE FROM membrelot WHERE idlot = ?");
-			s.setInt(1, getLotid(nomLot));
-			s.execute();
+			conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("DELETE FROM membrelot WHERE idlot = :idLot");
+			query.setParameter("idLot", getLotid(nomLot)).executeUpdate();
 
-			s = conn.getConnection().prepareStatement("DELETE FROM lot WHERE nomlot = ?");
-			s.setString(1, nomLot);
-			s.execute();
+			Query query2 = conn.getConnection().createQuery("DELETE FROM lot WHERE nomlot = :nomLot");
+			query2.setParameter("nomLot", nomLot).executeUpdate();
+
 			return true;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -151,18 +144,11 @@ public class LotAccess {
 	public int getPlantsForLot(String nomLot) {
 		try {
 
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT COUNT(*) FROM plantelot WHERE idlot = ?");
-			s.setInt(1, getLotid(nomLot));
-			s.execute();
+			Query query = conn.getConnection().createQuery("SELECT COUNT(*) FROM plantelot WHERE idlot = :idLot");
+			return (int) query.setParameter("idLot", getLotid(nomLot)).getSingleResult();
+			
 
-			ResultSet rs = s.getResultSet();
-			if (rs.next()) {
-				return rs.getInt("count");
-			}
-			return -1;
-
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return -1;
 		}
@@ -170,24 +156,24 @@ public class LotAccess {
 
 	public ArrayList<String> getLots() {
 		try {
-			PreparedStatement s = conn.getConnection().prepareStatement("SELECT nomlot, nomaxmembre FROM lot");
-
-			s.execute();
-			ResultSet rs = s.getResultSet();
+			
+			Query query = conn.getConnection().createQuery("SELECT nomlot, nomaxmembre FROM lot");
+			List<Lot> lots = query.getResultList();
 
 			ArrayList<String> ret = new ArrayList<String>();
-
-			while (rs.next()) {
+			
+			for (Lot lot : lots) {
 				String data = "";
-				data += rs.getString("nomlot");
+				data += lot.getNomLot();
 				data += ",";
-				data += rs.getString("nomaxmembre");
+				data += lot.getNoMaxMembre();
 				ret.add(data);
 			}
 
+
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -195,22 +181,19 @@ public class LotAccess {
 
 	public ArrayList<Integer> getMembrePourLot(int lotId) {
 		try {
-			PreparedStatement s = conn.getConnection()
-					.prepareStatement("SELECT nomembre FROM membrelot WHERE idlot = ? and validationadmin = true");
-
-			s.setInt(1, lotId);
-			s.execute();
-			ResultSet rs = s.getResultSet();
+			
+			Query query = conn.getConnection().createQuery("SELECT nomembre FROM membrelot WHERE idlot = :idLot and validationadmin = true");
+			List<MembreLot> ml = query.setParameter("idLot", lotId).getResultList();
 
 			ArrayList<Integer> ret = new ArrayList<Integer>();
-
-			while (rs.next()) {
-				ret.add(rs.getInt("nomembre"));
+			
+			for (MembreLot membreLots : ml) {
+				ret.add(membreLots.getIdMembre());
 			}
 
 			return ret;
 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}

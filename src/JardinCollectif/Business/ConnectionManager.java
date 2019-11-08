@@ -201,7 +201,7 @@ public class ConnectionManager {
 
 					int idPlante = pa.getPlanteId(nomPlante);
 					int idLot = la.getLotid(nomLot);
-
+					
 					Date dateDeRevoltePrevu = pa.getDateDeRecoltePrevu(idLot, idPlante);
 					Date currentDate = new Date(new java.util.Date().getTime());
 

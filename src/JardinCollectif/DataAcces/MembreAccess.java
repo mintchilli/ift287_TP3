@@ -16,7 +16,8 @@ public class MembreAccess {
 
 	public boolean inscrireMembre(String prenom, String nom, String motDePasse, int noMembre) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Membre m = new Membre(prenom, nom, motDePasse, noMembre);
 			conn.getConnection().persist(m);
 			return true;
@@ -30,7 +31,8 @@ public class MembreAccess {
 
 	public boolean supprimerMembre(int noMembre) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery("DELETE FROM Membre m WHERE m.noMembre = :noMembre");
 			query.setParameter("noMembre", noMembre).executeUpdate();
 
@@ -45,7 +47,8 @@ public class MembreAccess {
 
 	public boolean makeAdmin(int noMembre) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery("UPDATE Membre SET estAdmin = 1 WHERE noMembre = :noMembre");
 			query.setParameter("noMembre", noMembre).executeUpdate();
 
@@ -61,7 +64,8 @@ public class MembreAccess {
 	public ArrayList<Integer> getMembreLots(int noMembre) {
 		ArrayList<Integer> ret = new ArrayList<Integer>();
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery("SELECT idlot FROM MembreLot WHERE noMembre = :noMembre");
 			List<MembreLot> membrelots = query.setParameter("noMembre", noMembre).getResultList();
 

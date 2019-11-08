@@ -2,12 +2,13 @@ package JardinCollectif.Data;
 
 import javax.persistence.Id;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 
 @Entity
 public class Plante {
 	
-	@Id
-	private Integer noPlante;
+	@Id @GeneratedValue
+	private Integer idPlante;
 	private String nomPlante;
 	private int tempsCulture;
 	
@@ -17,11 +18,11 @@ public class Plante {
 		this.tempsCulture = tempsCulture;
 	}
 	
-	public Integer getNoPlante() {
-		return noPlante;
+	public Integer getIdPlante() {
+		return idPlante;
 	}
-	public void setNoPlante(Integer noPlante) {
-		this.noPlante = noPlante;
+	public void setIdPlante(Integer noPlante) {
+		this.idPlante = noPlante;
 	}
 	public String getNomPlante() {
 		return nomPlante;

@@ -19,7 +19,8 @@ public class LotAccess {
 
 	public boolean ajouterLot(String nomLot, int noMaxMembre) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Lot l = new Lot(nomLot, noMaxMembre);
 			conn.getConnection().persist(l);
 
@@ -34,8 +35,8 @@ public class LotAccess {
 
 	public boolean rejoindreLot(int idLot, int noMembre) {
 		try {
-
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			MembreLot ml = new MembreLot(noMembre, idLot);
 			conn.getConnection().persist(ml);
 
@@ -51,7 +52,8 @@ public class LotAccess {
 	public int getLotid(String nomLot) {
 		try {
 			EntityManager newEm = conn.getEmf().createEntityManager();
-			newEm.getTransaction().begin();
+			if (!newEm.getTransaction().isActive())
+				newEm.getTransaction().begin();
 			Query query = newEm.createQuery("SELECT idLot FROM Lot WHERE nomLot = :nomLot");
 
 			Integer idLot = (Integer) query.setParameter("nomLot", nomLot).getSingleResult();
@@ -72,7 +74,8 @@ public class LotAccess {
 
 	public boolean accepterDemande(int idLot, int noMembre) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery(
 					"UPDATE MembreLot SET validationAdmin = 1 WHERE idMembre = :noMembre AND idLot = :idLot");
 			query.setParameter("noMembre", noMembre);
@@ -89,8 +92,8 @@ public class LotAccess {
 
 	public boolean refuserDemande(int idLot, int noMembre) {
 		try {
-
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection()
 					.createQuery("DELETE FROM MembreLot WHERE idMembre = :noMembre AND idLot = :idLot");
 			query.setParameter("noMembre", noMembre);
@@ -124,8 +127,8 @@ public class LotAccess {
 
 	public boolean supprimerLot(String nomLot) {
 		try {
-
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery("DELETE FROM MembreLot WHERE idLot = :idLot");
 			query.setParameter("idLot", getLotid(nomLot)).executeUpdate();
 

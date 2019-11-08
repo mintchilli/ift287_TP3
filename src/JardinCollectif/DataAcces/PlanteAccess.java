@@ -26,7 +26,8 @@ public class PlanteAccess {
 	
 	public boolean ajouterPlante(String nomPlante, int tempsDeCulture) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			Plante p = new Plante(nomPlante, tempsDeCulture);
 			conn.getConnection().persist(p);
 			return true;
@@ -39,17 +40,14 @@ public class PlanteAccess {
 	
 	public boolean retirerPlante(String nomPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query1 = conn.getConnection().createQuery("SELECT count(*) FROM plante WHERE nomPlante = :nomPlante");
-
-			int count = (int) query1.setParameter("nomPlante", nomPlante).getSingleResult();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			
-			if (count > 0)
+			if (getPlanteNbrTotal(getPlanteId(nomPlante)) > 0)
 				return false;
 			
-			conn.getConnection().getTransaction().begin();
-			Query query2 = conn.getConnection().createQuery("DELETE FROM Plante p WHERE p.nomPlante = :nomPlante");
-			query2.setParameter("nomPlante", nomPlante).executeUpdate();
+			Query query = conn.getConnection().createQuery("DELETE FROM Plante p WHERE p.nomPlante = :nomPlante");
+			query.setParameter("nomPlante", nomPlante).executeUpdate();
 
 			return true;
 
@@ -61,7 +59,8 @@ public class PlanteAccess {
 	
 	public boolean planterPlante(int idLot, int idPlante, Date datePlantation, int nbExemplaires, Date dateDeRecoltePrevu) {
 		try {
-			conn.getConnection().getTransaction().begin();
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
 			PlanteLot pl = new PlanteLot(idLot, idPlante, datePlantation, dateDeRecoltePrevu, nbExemplaires);
 			conn.getConnection().persist(pl);
 
@@ -75,15 +74,15 @@ public class PlanteAccess {
 	
 	public boolean recolterPlante(int idPlante, int idLot) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("select * from PlanteLot where idLot = :idLot and idPlante = :idPlante");
+			if (!conn.getConnection().getTransaction().isActive())
+				conn.getConnection().getTransaction().begin();
+			Query query = conn.getConnection().createQuery("select pl from PlanteLot pl where pl.idLot = :idLot and pl.idPlante = :idPlante");
 			PlanteLot pl = (PlanteLot) query
 				.setParameter("idLot", idLot)
 				.setParameter("idPlante", idPlante)
 				.getSingleResult();
 			
-			conn.getConnection().getTransaction().begin();
-			Query query2 = conn.getConnection().createQuery("delete from plantelot where idLot = :idLot and idPlante = :idPlante");
+			Query query2 = conn.getConnection().createQuery("delete from PlanteLot pl where pl.idLot = :idLot and pl.idPlante = :idPlante");
 			query2
 				.setParameter("idLot", idLot)
 				.setParameter("idPlante", idPlante)
@@ -99,8 +98,8 @@ public class PlanteAccess {
 	
 	public int getPlanteId(String nomPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT idPlante FROM plante WHERE nomPlante = :nomPlante");
+			
+			Query query = conn.getConnection().createQuery("SELECT p.idPlante FROM Plante p WHERE p.nomPlante = :nomPlante");
 			return (int) query
 				.setParameter("nomPlante", nomPlante)
 				.getSingleResult();
@@ -114,8 +113,8 @@ public class PlanteAccess {
 	
 	public String getPlanteNom(int idPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT nomPlante FROM plante WHERE idPlante = :idPlante");
+			
+			Query query = conn.getConnection().createQuery("SELECT p.nomPlante FROM Plante p WHERE p.idPlante = :idPlante");
 			return (String) query
 				.setParameter("idPlante", idPlante)
 				.getSingleResult();
@@ -129,11 +128,11 @@ public class PlanteAccess {
 	
 	public int getPlanteNbrTotal(int idPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT SUM(nbExemplaires) FROM plantelot WHERE idPlante = :idPlante");
-			return (int) query
+			
+			Query query = conn.getConnection().createQuery("SELECT SUM(pl.nbExemplaires) FROM PlanteLot pl WHERE pl.idPlante = :idPlante");
+			return Math.toIntExact( (long) query
 				.setParameter("idPlante", idPlante)
-				.getSingleResult();
+				.getSingleResult());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -144,8 +143,8 @@ public class PlanteAccess {
 	
 	public int getTempsCulture(String nomPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT tempsCulture FROM plante WHERE nomPlante = :nomPlante");
+			
+			Query query = conn.getConnection().createQuery("SELECT p.tempsCulture FROM Plante p WHERE p.nomPlante = :nomPlante");
 			return (int) query
 				.setParameter("nomPlante", nomPlante)
 				.getSingleResult();
@@ -159,8 +158,8 @@ public class PlanteAccess {
 	
 	public Date getDatePlantation(int idLot, int idPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT datePlantation FROM plantelot WHERE idLot = :idLot and idPlante = :idPlante");
+			
+			Query query = conn.getConnection().createQuery("SELECT pl.datePlantation FROM PlanteLot pl WHERE pl.idLot = :idLot and pl.idPlante = :idPlante");
 			return (Date) query
 				.setParameter("idLot", idLot)
 				.setParameter("idPlante", idPlante)
@@ -175,8 +174,8 @@ public class PlanteAccess {
 	
 	public Date getDateDeRecoltePrevu(int idLot, int idPlante) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT dateDeRecoltePrevu FROM plantelot WHERE idLot = :idLot and idPlante = :idPlante");
+			
+			Query query = conn.getConnection().createQuery("SELECT pl.dateDeRecoltePrevu FROM PlanteLot pl WHERE pl.idLot = :idLot and pl.idPlante = :idPlante");
 			return (Date) query
 				.setParameter("idLot", idLot)
 				.setParameter("idPlante", idPlante)
@@ -191,14 +190,14 @@ public class PlanteAccess {
 	
 	public ArrayList<String> getPlantesList() {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT * FROM plante");
+			
+			Query query = conn.getConnection().createQuery("SELECT p FROM Plante p");
 			List<Plante> pList = (List<Plante>) query.getResultList();
 			
 			ArrayList<String> ret = new ArrayList<String>();
 			
 			for (Plante plante : pList) {
-				int idPlante = plante.getNoPlante();
+				int idPlante = plante.getIdPlante();
 				
 				String data = "Plante : ";
 				data += getPlanteNom(idPlante);
@@ -218,8 +217,8 @@ public class PlanteAccess {
 	
 	public ArrayList<String> getPlantesPourLot(int idLot) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT * FROM plantelot WHERE idLot = :idLot");
+			
+			Query query = conn.getConnection().createQuery("SELECT pl FROM PlanteLot pl WHERE pl.idLot = :idLot");
 			List<PlanteLot> plList = (List<PlanteLot>) query
 					.setParameter("idLot", idLot)
 					.getResultList();

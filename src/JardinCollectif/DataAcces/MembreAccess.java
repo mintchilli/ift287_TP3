@@ -1,15 +1,8 @@
 package JardinCollectif.DataAcces;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-
 import JardinCollectif.Data.Membre;
 import JardinCollectif.Data.MembreLot;
 
@@ -69,7 +62,7 @@ public class MembreAccess {
 		ArrayList<Integer> ret = new ArrayList<Integer>();
 		try {
 			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT idlot FROM membrelot WHERE nomembre = :noMembre");
+			Query query = conn.getConnection().createQuery("SELECT idlot FROM MembreLot WHERE noMembre = :noMembre");
 			List<MembreLot> membrelots = query.setParameter("noMembre", noMembre).getResultList();
 
 			for (MembreLot m : membrelots) {
@@ -89,8 +82,8 @@ public class MembreAccess {
 	public int getMembreCount(int idLot) {
 		try {
 
-			Query query = conn.getConnection().createQuery("SELECT count(*) FROM membrelot WHERE idlot = :idLot");
-			return (int) query.setParameter("idLot", idLot).getSingleResult();
+			Query query = conn.getConnection().createQuery("SELECT count(m) FROM MembreLot m WHERE idLot = :idLot");
+			return Math.toIntExact((long) query.setParameter("idLot", idLot).getSingleResult());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -101,13 +94,13 @@ public class MembreAccess {
 	public ArrayList<String> getMembreList() {
 		try {
 
-			Query query = conn.getConnection().createQuery("SELECT nom, prenom, estadmin FROM membre;");
+			Query query = conn.getConnection().createQuery("SELECT m FROM Membre m");
 			List<Membre> membres = query.getResultList();
 
 			ArrayList<String> ret = new ArrayList<String>();
 
 			for (Membre membre : membres) {
-				String data = "Prï¿½nom : ";
+				String data = "Prénom : ";
 				data += membre.getPrenom();
 				data += ", Nom : ";
 				data += membre.getNom();
@@ -131,7 +124,7 @@ public class MembreAccess {
 		try {
 
 			Query query = conn.getConnection()
-					.createQuery("SELECT nom, prenom, estadmin FROM membre WHERE nomembre = :noMembre");
+					.createQuery("SELECT m FROM Membre m WHERE noMembre = :noMembre");
 			Membre membre = (Membre) query.setParameter("noMembre", noMembre).getSingleResult();
 
 			String data = "";

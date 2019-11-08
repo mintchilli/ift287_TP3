@@ -1,15 +1,12 @@
 package JardinCollectif.DataAcces;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import JardinCollectif.Data.Lot;
-import JardinCollectif.Data.Membre;
 import JardinCollectif.Data.MembreLot;
 
 public class LotAccess {
@@ -53,14 +50,17 @@ public class LotAccess {
 
 	public int getLotid(String nomLot) {
 		try {
-			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("SELECT idLot FROM Lot WHERE nomLot = :nomLot");
+			EntityManager newEm = conn.getEmf().createEntityManager();
+			newEm.getTransaction().begin();
+			Query query = newEm.createQuery("SELECT idLot FROM Lot WHERE nomLot = :nomLot");
 
-			Lot lot = (Lot) query.setParameter("nomLot", nomLot).getSingleResult();
+			Integer idLot = (Integer) query.setParameter("nomLot", nomLot).getSingleResult();
 
-			if (lot != null)
-				return lot.getIdLot();
-
+			if (idLot != null) {
+				newEm.close();
+				return idLot;
+			}
+				
 			return -1;
 
 		} catch (Exception e) {
@@ -74,7 +74,7 @@ public class LotAccess {
 		try {
 			conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection().createQuery(
-					"UPDATE membrelot SET validationAdmin = 1 WHERE noMembre = :noMembre AND idLot = :idLot");
+					"UPDATE MembreLot SET validationAdmin = 1 WHERE idMembre = :noMembre AND idLot = :idLot");
 			query.setParameter("noMembre", noMembre);
 			query.setParameter("idLot", idLot).executeUpdate();
 
@@ -92,7 +92,7 @@ public class LotAccess {
 
 			conn.getConnection().getTransaction().begin();
 			Query query = conn.getConnection()
-					.createQuery("DELETE FROM membrelot WHERE noMembre = :noMembre AND idLot = :idLot");
+					.createQuery("DELETE FROM MembreLot WHERE idMembre = :noMembre AND idLot = :idLot");
 			query.setParameter("noMembre", noMembre);
 			query.setParameter("idLot", idLot).executeUpdate();
 
@@ -108,11 +108,11 @@ public class LotAccess {
 	public int getMembreMax(String nomLot) {
 		try {
 
-			Query query = conn.getConnection().createQuery("SELECT nomaxmembre FROM lot WHERE nomlot = :nomLot");
-			Lot lot = (Lot) query.setParameter("nomLot", nomLot).getSingleResult();
+			Query query = conn.getConnection().createQuery("SELECT noMaxMembre FROM Lot WHERE nomLot = :nomLot");
+			Integer max = (Integer) query.setParameter("nomLot", nomLot).getSingleResult();
 
-			if (lot != null) {
-				return lot.getNoMaxMembre();
+			if (max != null) {
+				return max;
 			}
 			return -1;
 
@@ -126,10 +126,10 @@ public class LotAccess {
 		try {
 
 			conn.getConnection().getTransaction().begin();
-			Query query = conn.getConnection().createQuery("DELETE FROM membrelot WHERE idlot = :idLot");
+			Query query = conn.getConnection().createQuery("DELETE FROM MembreLot WHERE idLot = :idLot");
 			query.setParameter("idLot", getLotid(nomLot)).executeUpdate();
 
-			Query query2 = conn.getConnection().createQuery("DELETE FROM lot WHERE nomlot = :nomLot");
+			Query query2 = conn.getConnection().createQuery("DELETE FROM Lot WHERE nomLot = :nomLot");
 			query2.setParameter("nomLot", nomLot).executeUpdate();
 
 			return true;
@@ -144,7 +144,7 @@ public class LotAccess {
 	public int getPlantsForLot(String nomLot) {
 		try {
 
-			Query query = conn.getConnection().createQuery("SELECT COUNT(*) FROM plantelot WHERE idlot = :idLot");
+			Query query = conn.getConnection().createQuery("SELECT COUNT(*) FROM PlanteLot WHERE idLot = :idLot", Integer.class);
 			return (int) query.setParameter("idLot", getLotid(nomLot)).getSingleResult();
 			
 
@@ -157,7 +157,7 @@ public class LotAccess {
 	public ArrayList<String> getLots() {
 		try {
 			
-			Query query = conn.getConnection().createQuery("SELECT nomlot, nomaxmembre FROM lot");
+			Query query = conn.getConnection().createQuery("SELECT l FROM Lot l");
 			List<Lot> lots = query.getResultList();
 
 			ArrayList<String> ret = new ArrayList<String>();
@@ -182,7 +182,7 @@ public class LotAccess {
 	public ArrayList<Integer> getMembrePourLot(int lotId) {
 		try {
 			
-			Query query = conn.getConnection().createQuery("SELECT nomembre FROM membrelot WHERE idlot = :idLot and validationadmin = true");
+			Query query = conn.getConnection().createQuery("SELECT c FROM MembreLot c WHERE idLot = :idLot and validationAdmin = 1");
 			List<MembreLot> ml = query.setParameter("idLot", lotId).getResultList();
 
 			ArrayList<Integer> ret = new ArrayList<Integer>();

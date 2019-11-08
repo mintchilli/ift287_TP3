@@ -98,7 +98,7 @@ public class ConnectionManager {
 						la = new LotAccess(cx);
 					LotManager lm = new LotManager(cx);
 					if (lm.hasPlants(nomLot))
-						jc.AfficherErreur("erreur, il y a encore desd plantes non rï¿½coltï¿½ dans ce lot");
+						jc.AfficherErreur("erreur, il y a encore des plantes non récoltées dans ce lot");
 					else {
 						la.supprimerLot(nomLot);
 						isCommiteableTransaction = true;

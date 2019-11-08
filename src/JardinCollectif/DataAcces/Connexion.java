@@ -119,6 +119,11 @@ public class Connexion
     {
     	return em;
     }
+    
+    public EntityManagerFactory getEmf()
+    {
+    	return emf;
+    }
 
 
 
